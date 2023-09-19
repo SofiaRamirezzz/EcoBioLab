@@ -1,0 +1,33 @@
+import numpy as np
+import pandas as pd
+from pandas import DataFrame
+import ood
+
+#define classes and variables
+ood.export(DataFrame, filename=r'C:\Users\USername\Documents\PlantData\TotalPlantData.ood',
+           name='DataFrame')
+ioms = list(set(DataFrame()))
+
+#define functions
+ood.export(DataFrame)
+def LoadData(filep, sheet='Sheet1):
+    return pd.read_excel(filep, sheet_name=sheet)
+
+def SaveData(df, filep, sheet='Sheet1):
+     df.to_excel(filep, sheet_name=sheet, index=False)
+
+def DropColumns(df, cols):
+    df=df.drop(columns =cols)
+
+def CreateLand(ColumnLand):
+    Land = set(DataFrame(ColumnLand))
+    Create
+    return(DataFrame('Col'))
+
+
+staticmethod def Save_nth_data(save_path, extension, import_index, new_value):
+    new_value.save(f'{save_path}.{extension}', fts=import_index+1, ft=False)
+
+
+staticmethod def Load_nth_data(load_path, extension, import_index, new_dataset):
+    new_dataset.load(f'{load_path}.{extension}', fts=import_index+1, ft=False)
