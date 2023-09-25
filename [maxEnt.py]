@@ -1,0 +1,67 @@
+import numpy as np
+from scipy.optimize import minimize
+
+
+def logistic_coef(ME, Q):
+  tol = 1e-9
+  def loss(x):
+      return np.sum(ME * np.log1p(np.exp(-Q.dot(x))), axis=1)
+
+  def jac(x):
+      return -Q.T.dot((ME / (1 + np.exp(Q.dot(x)))))
+  
+  # Initialize weights
+  x0 = np.zeros(Q.shape[1])
+  bounds = [(None, None)] * Q.shape[1] #
+  result = minimize(loss, x0, jac=jac, method="L-BFGS-B", bounds=bounds)
+  #for i in Q.dot(result.x):
+  #    print(Q.dot(result.x))
+  #return result
+  return (Q.dot(result.x), result.x)
+
+p = np.genfromtxt("probabilities.csv", delimiter=",")
+occ = np.genfromtxt("occupancies.csv", delimiter=",")
+
+occ = np.genfromtxt("probs.csv", delimiter=",") 
+prob = np.genfromtxt("delta.csv", delimiter=",")
+
+#print(occ)
+
+res = np.zeros(occ.shape)
+occ_prop = np.zeros(occ.shape)
+
+maxEnt = 0
+for i in range(len(occ[0])):  
+  p_mat = np.zeros(occ.shape)
+  for j in range(len(occ)) : 
+    p_mat[j][i] = occ[j][i]
+  #print(occ, occ_prop)
+  q = occ@p 
+  Q = p_mat.T @ occ  
+  probs , coef = logistic_coef(occ.T, p_mat.T)
+  predictedData = np.exp(probs) / (1 + np.exp(probs))
+  #print("OCC2",i)
+  for ind in np.where(occ[:,i] > 1e-08) :
+      #print(ind, predictedData[ind[0]])
+      res[ind[0]][i]=  predictedData[ind[0]] 
+      maxEnt += -(occ[ind[0]][i]*np.log(occ[ind[0]][i]))
+      maxEnt += -(1-occ[ind[0]][i])*np.log(1-occ[ind[0]][i]) 
+      if (occ[ind[0]][i]<0.5) :
+        ps = predictedData[ind[0]]
+        maxEnt += -(ps*np.log(ps))
+        maxEnt += -(1-ps)*np.log(1-ps)          
+        occ_prop[ind[0]][i] = min(0.99,max(0.01,ps))
+      else:
+        ps = predictedData[ind[0]]
+        maxEnt += -(ps*np.log(ps))
+        maxEnt += -(1-ps)*np.log(1-ps)
+        if (min(0.99,max(0.01,ps)) != predictedData[ind[0]]) :
+          print("value changed",min(0.99,max(0.01,ps)),predictedData[ind[0]] )
+          occ_prop[ind[0]][i] = min(0.99,max(0.01,ps))
+        else:
+          occ_prop[ind[0]][i] = predictedData[ind[0]]
+
+print(maxEnt)
+for row in occ_prop:
+    for col in row:
+        print(f"{col}", end=',')
